@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# bootstrap.sh — 新项目一键拉取 vibe-coding-cn 技能母盘
+# bootstrap.sh - 新项目一键拉取 vibe-coding-cn 技能母盘
 #
 # 用法:
 #   bash bootstrap.sh [选项]
@@ -372,23 +372,59 @@ main() {
 
     # 校验 profile 或 all 至少选一个
     if [[ -z "$PROFILE" ]] && ! $ALL; then
-        log_error "请指定 -p <profile> 或 -a (全部)"
+        echo -e "${YELLOW}未指定 profile，进入交互式选型...${NC}"
         echo ""
-        echo "可用 profile:"
-        echo "  saas            SaaS 应用"
-        echo "  enterprise      企业级应用"
-        echo "  quant-crypto    加密货币量化"
-        echo "  quant-astock    A 股量化"
-        echo "  quant-us        美股量化"
-        echo "  app-mini        APP/小程序"
-        echo "  full-stack      全栈开发"
-        echo "  all             全部技能 + 工作流"
+        echo -e "${BLUE}━━━ 选型问答 ━━━${NC}"
         echo ""
-        echo "示例:"
-        echo "  bash bootstrap.sh -p saas"
-        echo "  bash bootstrap.sh -p quant-crypto -w"
-        echo "  bash bootstrap.sh -a -w"
-        exit 1
+
+        echo -e "  ${YELLOW}Q1:${NC} 你的项目要接交易所 API 做自动交易吗？"
+        echo "      1) 不是"
+        echo "      2) 是，加密货币（币安/OKX/Bybit）"
+        echo "      3) 是，A 股（tushare/akshare）"
+        echo "      4) 是，美股（Alpaca/Polygon）"
+        read -p "  请选择 [1-4]: " q1
+
+        case "$q1" in
+            2) PROFILE="quant-crypto" ;;
+            3) PROFILE="quant-astock" ;;
+            4) PROFILE="quant-us" ;;
+            *)
+                echo ""
+                echo -e "  ${YELLOW}Q2:${NC} 你的项目是手机 APP 或微信小程序吗？"
+                echo "      1) 不是"
+                echo "      2) 是"
+                read -p "  请选择 [1-2]: " q2
+
+                if [[ "$q2" == "2" ]]; then
+                    PROFILE="app-mini"
+                else
+                    echo ""
+                    echo -e "  ${YELLOW}Q3:${NC} 你的项目有「多租户」概念吗？（不同客户/公司共用一套系统）"
+                    echo "      1) 没有"
+                    echo "      2) 有"
+                    read -p "  请选择 [1-2]: " q3
+
+                    if [[ "$q3" == "2" ]]; then
+                        PROFILE="saas"
+                    else
+                        echo ""
+                        echo -e "  ${YELLOW}Q4:${NC} 你的项目是企业内部系统吗？（ERP/OA/CRM/审批流）"
+                        echo "      1) 不是"
+                        echo "      2) 是"
+                        read -p "  请选择 [1-2]: " q4
+
+                        if [[ "$q4" == "2" ]]; then
+                            PROFILE="enterprise"
+                        else
+                            PROFILE="full-stack"
+                        fi
+                    fi
+                fi
+                ;;
+        esac
+
+        echo ""
+        echo -e "  ${GREEN}→ 已选择: $PROFILE${NC}"
     fi
 
     # all profile 同时开启全量和工作流

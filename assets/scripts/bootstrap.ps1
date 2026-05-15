@@ -339,6 +339,55 @@ function Generate-Index {
     Write-Info "索引文件: $indexFile"
 }
 
+# ==================== 交互式选型 ====================
+function Interactive-Select {
+    Write-Host ""
+    Write-Host "━━━ 选型问答 ━━━" -ForegroundColor Cyan
+    Write-Host ""
+
+    # Q1
+    Write-Host "  Q1: 你的项目要接交易所 API 做自动交易吗？" -ForegroundColor Yellow
+    Write-Host "      1) 不是"
+    Write-Host "      2) 是，加密货币（币安/OKX/Bybit）"
+    Write-Host "      3) 是，A 股（tushare/akshare）"
+    Write-Host "      4) 是，美股（Alpaca/Polygon）"
+    $q1 = Read-Host "  请选择 [1-4]"
+    switch ($q1) {
+        "2" { return "quant-crypto" }
+        "3" { return "quant-astock" }
+        "4" { return "quant-us" }
+    }
+
+    # Q2
+    Write-Host ""
+    Write-Host "  Q2: 你的项目是手机 APP 或微信小程序吗？" -ForegroundColor Yellow
+    Write-Host "      1) 不是"
+    Write-Host "      2) 是"
+    $q2 = Read-Host "  请选择 [1-2]"
+    if ($q2 -eq "2") { return "app-mini" }
+
+    # Q3
+    Write-Host ""
+    Write-Host "  Q3: 你的项目有「多租户」概念吗？（不同客户/公司共用一套系统）" -ForegroundColor Yellow
+    Write-Host "      1) 没有"
+    Write-Host "      2) 有"
+    $q3 = Read-Host "  请选择 [1-2]"
+    if ($q3 -eq "2") { return "saas" }
+
+    # Q4
+    Write-Host ""
+    Write-Host "  Q4: 你的项目是企业内部系统吗？（ERP/OA/CRM/审批流）" -ForegroundColor Yellow
+    Write-Host "      1) 不是"
+    Write-Host "      2) 是"
+    $q4 = Read-Host "  请选择 [1-2]"
+    if ($q4 -eq "2") { return "enterprise" }
+
+    # 默认
+    Write-Host ""
+    Write-Host "  → 推荐: full-stack（全栈，包含所有技能）" -ForegroundColor Green
+    return "full-stack"
+}
+
 # ==================== 主流程 ====================
 
 # 检测母盘路径
@@ -354,23 +403,10 @@ if ($Source -eq "" -or -not (Test-Path "$Source\assets\skills")) {
 
 # 校验参数
 if ($Profile -eq "" -and -not $All) {
-    Write-Err "请指定 -Profile <name> 或 -All"
+    Write-Host "未指定 profile，进入交互式选型..." -ForegroundColor Yellow
+    $Profile = Interactive-Select
     Write-Host ""
-    Write-Host "可用 profile:"
-    Write-Host "  saas            SaaS 应用"
-    Write-Host "  enterprise      企业级应用"
-    Write-Host "  quant-crypto    加密货币量化"
-    Write-Host "  quant-astock    A 股量化"
-    Write-Host "  quant-us        美股量化"
-    Write-Host "  app-mini        APP/小程序"
-    Write-Host "  full-stack      全栈开发"
-    Write-Host "  all             全部技能 + 工作流"
-    Write-Host ""
-    Write-Host "示例:"
-    Write-Host "  powershell -ExecutionPolicy Bypass -File bootstrap.ps1 -Profile saas"
-    Write-Host "  powershell -ExecutionPolicy Bypass -File bootstrap.ps1 -Profile quant-crypto -Workflow"
-    Write-Host "  powershell -ExecutionPolicy Bypass -File bootstrap.ps1 -All -Workflow"
-    exit 1
+    Write-Host "  已选择: $Profile" -ForegroundColor Green
 }
 
 # all profile 同时开启全量和工作流
