@@ -196,14 +196,23 @@ git push origin main
 > **在终端运行以下命令（不要让 AI 代劳，AI 无法可靠下载大文件）：**
 
 ```bash
-# 1. 克隆母机仓库
+# Linux / macOS / Git Bash：
 git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git ~/vibe-coding-cn
-
-# 2. 查看帮助，选择参数
 bash ~/vibe-coding-cn/vibe-init.sh --help
 
-# 3. 运行初始化脚本
+# Windows PowerShell：
+git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git $HOMEibe-coding-cn
+bash $HOMEibe-coding-cnibe-init.sh --help
+```
+
+运行 `--help` 查看所有参数后，执行初始化：
+
+```bash
+# Linux / macOS / Git Bash：
 bash ~/vibe-coding-cn/vibe-init.sh --ai <AI工具> --type <项目类型> --name <项目名>
+
+# Windows PowerShell：
+bash $HOMEibe-coding-cnibe-init.sh --ai <AI工具> --type <项目类型> --name <项目名>
 ```
 
 > 💡 示例：`bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name my-bot`
