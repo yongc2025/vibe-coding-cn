@@ -119,13 +119,16 @@ bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot
 - 从 GitHub 下载母机的 Skills（无需手动克隆仓库）
 - 复制对应业务类型的 Skills 到 `.skills/`
 - 生成你选择的 AI 工具入口文件（CLAUDE.md / .cursorrules / copilot-instructions.md 等）
-- 复制自动开发工作流（auto-dev-loop）
+- 复制自动开发工作流（auto-dev-loop + canvas-dev）
 - 创建 `docs/PROJECT_BRIEF.md` 项目定义模板
+- 复制参考文档（方法论 + 案例研究 + 提示词库 + 入门指南）
+- 创建项目骨架（src/ + tests/ + docs/）
+- 生成 README.md
 - 初始化 Git 仓库
 
 **第 2 步：填写项目定义**
 
-脚本已自动创建 `docs/PROJECT_BRIEF.md` 模板，进入项目目录，编辑它，回答 4 个问题：
+脚本已自动创建完整的项目结构，包括 `docs/PROJECT_BRIEF.md` 模板。进入项目目录，编辑它，回答 4 个问题：
 1. **目标**：我要解决什么问题？
 2. **现状**：当前是什么情况？
 3. **差距**：从现状到目标，缺什么？
