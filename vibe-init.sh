@@ -521,6 +521,7 @@ done
 # ── [4/9] 复制工作流 ────────────────────────────────────────
 if $WITH_WORKFLOW; then
     echo -e "${GREEN}[4/9] 复制开发工作流...${NC}"
+    run mkdir -p "$FULL_PATH/.workflow"
     if [ -d "$MACHINE_DIR/assets/workflow/auto-dev-loop" ]; then
         run cp -r "$MACHINE_DIR/assets/workflow/auto-dev-loop" "$FULL_PATH/.workflow/auto-dev-loop"
         echo -e "  ${GREEN}✓${NC} auto-dev-loop（需求→计划→实施→验证→迭代）"
