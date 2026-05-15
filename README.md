@@ -199,16 +199,16 @@ git push origin main
 # 1. 克隆母机仓库
 git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git ~/vibe-coding-cn
 
-# 2. 运行初始化脚本（修改 --name 为你的项目名）
-bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name web3-meme-hunter
+# 2. 查看帮助，选择参数
+bash ~/vibe-coding-cn/vibe-init.sh --help
 
-# 3. 进入项目目录
-cd web3-meme-hunter
+# 3. 运行初始化脚本
+bash ~/vibe-coding-cn/vibe-init.sh --ai <AI工具> --type <项目类型> --name <项目名>
 ```
 
-> 💡 参数说明：`--type` 改项目类型，`--name` 改项目名，`--ai` 改 AI 工具
+> 💡 示例：`bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name my-bot`
 >
-> **脚本运行完成后，打开项目目录，告诉 AI：**
+> **脚本运行完成后，进入项目目录，告诉 AI：**
 > 「阅读 docs/PROJECT_BRIEF.md 和 .skills/ 下的 SKILL.md，然后开始开发」
 
 **脚本会自动完成所有初始化工作。** 🚀
