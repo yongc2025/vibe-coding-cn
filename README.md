@@ -188,12 +188,10 @@ git push origin main
 
 ## ⚡ 1 分钟快速开始
 
-> 打开你的 AI 助手，告诉它：
+> 告诉你的 AI 助手：
 
 ```
-我要用 https://github.com/yongc2025/vibe-coding-cn.git 这个母机来孵化一个 [你的项目描述] 项目。
-请阅读这个仓库的 README.md，然后按照"🚀 孵化我的项目"章节的步骤帮我操作。
-注意：不要把仓库克隆到我的工作区，阅读完文档后按步骤执行即可。
+读取 https://raw.githubusercontent.com/yongc2025/vibe-coding-cn/develop/vibe-init.sh 并保存为 vibe-init.sh，然后运行它来创建项目。
 ```
 
 **AI 会自动完成剩下的一切。** 🚀
