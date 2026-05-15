@@ -48,7 +48,7 @@ ${YELLOW}选项:${NC}
   --name <名称>       项目目录名（默认: my-<类型>-project）
   --dir <路径>        项目创建目录（默认: 当前目录）
   --skills <技能列表>  额外技能，逗号分隔
-  --with-workflow     同时复制 auto-dev-loop 工作流
+  --no-workflow     不复制 auto-dev-loop 工作流（默认复制）
   --no-codex          不复制 .codex/ 配置
   --no-agents         不复制 AGENTS.md
   --dry-run           只显示会做什么，不实际执行
@@ -457,7 +457,7 @@ AI_TYPE="all"
 PROJECT_NAME=""
 PROJECT_DIR="."
 EXTRA_SKILLS=""
-WITH_WORKFLOW=false
+WITH_WORKFLOW=true
 NO_CODEX=false
 NO_AGENTS=false
 DRY_RUN=false
@@ -469,7 +469,7 @@ while [[ $# -gt 0 ]]; do
         --name)       PROJECT_NAME="$2"; shift 2 ;;
         --dir)        PROJECT_DIR="$2"; shift 2 ;;
         --skills)     EXTRA_SKILLS="$2"; shift 2 ;;
-        --with-workflow) WITH_WORKFLOW=true; shift ;;
+        --no-workflow) WITH_WORKFLOW=false; shift ;;
         --no-codex)   NO_CODEX=true; shift ;;
         --no-agents)  NO_AGENTS=true; shift ;;
         --dry-run)    DRY_RUN=true; shift ;;
@@ -556,21 +556,21 @@ run() {
 }
 
 # ── 步骤 1: 创建项目目录 ─────────────────────────────────────
-echo -e "${GREEN}[1/6] 创建项目目录...${NC}"
+echo -e "${GREEN}[1/7] 创建项目目录...${NC}"
 run mkdir -p "$FULL_PATH"
 
 # ── 步骤 2: 复制 .codex/ ─────────────────────────────────────
 if ! $NO_CODEX; then
-    echo -e "${GREEN}[2/6] 复制 .codex/ 配置...${NC}"
+    echo -e "${GREEN}[2/7] 复制 .codex/ 配置...${NC}"
     if [ -d "$MACHINE_DIR/assets/config/.codex" ]; then
         run cp -r "$MACHINE_DIR/assets/config/.codex" "$FULL_PATH/.codex"
     fi
 else
-    echo -e "${GREEN}[2/6] 跳过 .codex/ 配置${NC}"
+    echo -e "${GREEN}[2/7] 跳过 .codex/ 配置${NC}"
 fi
 
 # ── 步骤 3: 复制 Skills ─────────────────────────────────────
-echo -e "${GREEN}[3/6] 复制 Skills...${NC}"
+echo -e "${GREEN}[3/7] 复制 Skills...${NC}"
 run mkdir -p "$FULL_PATH/.skills"
 IFS=',' read -ra SKILLS <<< "$SKILLS_LIST"
 for skill in "${SKILLS[@]}"; do
@@ -585,7 +585,7 @@ for skill in "${SKILLS[@]}"; do
 done
 
 # ── 步骤 4: 生成 AI 助手入口文件 ─────────────────────────────
-echo -e "${GREEN}[4/6] 生成 AI 助手入口文件...${NC}"
+echo -e "${GREEN}[4/7] 生成 AI 助手入口文件...${NC}"
 
 if $DRY_RUN; then
     case "$AI_TYPE" in
@@ -625,19 +625,59 @@ else
     esac
 fi
 
-# ── 步骤 5: 复制工作流（可选）────────────────────────────────
+# ── 步骤 5: 复制工作流 ────────────────────────────────────────
 if $WITH_WORKFLOW; then
-    echo -e "${GREEN}[5/6] 复制 auto-dev-loop 工作流...${NC}"
+    echo -e "${GREEN}[5/7] 复制 auto-dev-loop 工作流...${NC}"
     if [ -d "$MACHINE_DIR/assets/workflow/auto-dev-loop" ]; then
         run cp -r "$MACHINE_DIR/assets/workflow/auto-dev-loop" "$FULL_PATH/.workflow/auto-dev-loop"
         echo -e "  ${GREEN}✓${NC} auto-dev-loop"
     fi
 else
-    echo -e "${GREEN}[5/6] 跳过工作流${NC}"
+    echo -e "${GREEN}[5/7] 跳过工作流${NC}"
 fi
 
-# ── 步骤 6: 初始化 Git ───────────────────────────────────────
-echo -e "${GREEN}[6/6] 初始化 Git...${NC}"
+# ── 步骤 6: 创建项目定义模板 ──────────────────────────────────
+echo -e "${GREEN}[6/7] 创建 docs/PROJECT_BRIEF.md...${NC}"
+if ! $DRY_RUN; then
+    run mkdir -p "$FULL_PATH/docs"
+    cat > "$FULL_PATH/docs/PROJECT_BRIEF.md" << 'BRIEF_EOF'
+# 项目定义 — PROJECT_BRIEF.md
+
+> 请填写以下 4 个问题，帮助 AI 理解你的项目意图。
+> 填写完成后，告诉 AI：「阅读 docs/PROJECT_BRIEF.md，然后开始开发」。
+
+---
+
+## 1. 目标：我要解决什么问题？
+
+<!-- 用 1-3 句话描述你想做的事 -->
+
+
+## 2. 现状：当前是什么情况？
+
+<!-- 现在有什么？已经做了什么？ -->
+
+
+## 3. 差距：从现状到目标，缺什么？
+
+<!-- 技术？数据？接口？设计？ -->
+
+
+## 4. 判断标准：怎么知道做完了？
+
+<!-- 具体的验收条件，越明确越好 -->
+
+---
+
+> 💡 提示：填写完后，运行 `ls .skills/` 查看可用技能，AI 会自动利用这些技能帮你开发。
+BRIEF_EOF
+    echo -e "  ${GREEN}✓${NC} docs/PROJECT_BRIEF.md"
+else
+    echo -e "  ${BLUE}[DRY]${NC} 创建 docs/PROJECT_BRIEF.md"
+fi
+
+# ── 步骤 7: 初始化 Git ───────────────────────────────────────
+echo -e "${GREEN}[7/7] 初始化 Git...${NC}"
 if ! $DRY_RUN; then
     if [ ! -d "$FULL_PATH/.git" ]; then
         (cd "$FULL_PATH" && git init -q && git add -A && git commit -q -m "init: vibe-init from mother machine" 2>/dev/null || true)
@@ -657,15 +697,24 @@ echo -e "${GREEN}═════════════════════
 echo ""
 echo -e "  ${YELLOW}进入项目:${NC}  cd $FULL_PATH"
 echo ""
+echo -e "  ${YELLOW}下一步:${NC}"
+echo -e "    1. 编辑 ${GREEN}docs/PROJECT_BRIEF.md${NC}，填写项目定义（目标/现状/差距/标准）"
+echo -e "    2. 告诉 AI：「阅读 docs/PROJECT_BRIEF.md，然后开始开发」"
+echo ""
+echo -e "  ${YELLOW}已就绪:${NC}"
+echo -e "    📁 .skills/          — $(ls "$FULL_PATH/.skills/" 2>/dev/null | wc -l | tr -d ' ') 个领域技能"
+echo -e "    📋 PROJECT_BRIEF.md  — 项目定义模板（待填写）"
+echo -e "    🔄 .workflow/        — 自动开发工作流"
+echo ""
 
 # 根据 AI 类型给出提示
 case "$AI_TYPE" in
-    claude)  echo -e "  ${YELLOW}开始开发:${NC}  在项目目录运行 claude" ;;
-    cursor)  echo -e "  ${YELLOW}开始开发:${NC}  用 Cursor 打开项目目录" ;;
-    copilot) echo -e "  ${YELLOW}开始开发:${NC}  用 VS Code 打开项目目录（Copilot 自动加载）" ;;
-    windsurf) echo -e "  ${YELLOW}开始开发:${NC}  用 Windsurf 打开项目目录" ;;
-    cline)   echo -e "  ${YELLOW}开始开发:${NC}  用 VS Code + Cline 扩展打开项目目录" ;;
-    codex)   echo -e "  ${YELLOW}开始开发:${NC}  在项目目录运行 codex" ;;
+    claude)  echo -e "  ${YELLOW}开始开发:${NC}  cd $FULL_PATH && claude" ;;
+    cursor)  echo -e "  ${YELLOW}开始开发:${NC}  用 Cursor 打开 $FULL_PATH" ;;
+    copilot) echo -e "  ${YELLOW}开始开发:${NC}  用 VS Code 打开 $FULL_PATH（Copilot 自动加载）" ;;
+    windsurf) echo -e "  ${YELLOW}开始开发:${NC}  用 Windsurf 打开 $FULL_PATH" ;;
+    cline)   echo -e "  ${YELLOW}开始开发:${NC}  用 VS Code + Cline 扩展打开 $FULL_PATH" ;;
+    codex)   echo -e "  ${YELLOW}开始开发:${NC}  cd $FULL_PATH && codex" ;;
     all)
         echo -e "  ${YELLOW}开始开发:${NC}"
         echo -e "    Claude:  cd $FULL_PATH && claude"
