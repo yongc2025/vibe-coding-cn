@@ -236,8 +236,11 @@ bash "$HOME/vibe-coding-cn/vibe-init.sh" --ai <AI工具> --type <项目类型> -
 > **常用示例：**
 >
 > ```bash
-> # 加密货币量化 + Copilot
+> # 加密货币量化 + Copilot（创建子目录 my-bot）
 > bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name my-bot
+>
+> # 在当前目录直接初始化（不创建子目录）
+> bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name .
 >
 > # A股量化 + Claude
 > bash ~/vibe-coding-cn/vibe-init.sh --ai claude --type quant-astock --name my-stock-bot

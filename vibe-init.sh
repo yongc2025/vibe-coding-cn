@@ -26,6 +26,7 @@ ${BLUE}vibe-init.sh${NC} — 从母机初始化新项目（完整孵化版）
 
 ${YELLOW}用法:${NC}
   bash vibe-init.sh --ai <助手> --type <类型> [选项]
+  bash vibe-init.sh --ai copilot --type quant-crypto --name .  # 在当前目录初始化
 
 ${YELLOW}AI 助手 (--ai):${NC}
   claude        生成 CLAUDE.md（Claude Code）
@@ -48,7 +49,7 @@ ${YELLOW}项目类型 (--type):${NC}
 ${YELLOW}选项:${NC}
   --type <类型>       项目类型（必填）
   --ai <助手>         AI 助手类型（默认: all）
-  --name <名称>       项目目录名（默认: my-<类型>-project）
+  --name <名称>       项目目录名（默认: my-<类型>-project），传 . 表示当前目录
   --dir <路径>        项目创建目录（默认: 当前目录）
   --skills <技能列表>  额外技能，逗号分隔
   --no-workflow       不复制 auto-dev-loop 工作流（默认复制）
@@ -456,7 +457,11 @@ SKILLS_LIST=$(echo "$SKILLS_LIST" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's
 if [ -z "$PROJECT_NAME" ]; then
     PROJECT_NAME="my-${TYPE}-project"
 fi
-FULL_PATH="$PROJECT_DIR/$PROJECT_NAME"
+if [ "$PROJECT_NAME" = "." ]; then
+    FULL_PATH="$PROJECT_DIR"
+else
+    FULL_PATH="$PROJECT_DIR/$PROJECT_NAME"
+fi
 
 echo ""
 echo -e "${CYAN}╔═══════════════════════════════════════════════════╗${NC}"
