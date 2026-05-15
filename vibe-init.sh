@@ -12,6 +12,10 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC
 # ── 母机远程地址 ──────────────────────────────────────────────
 VIBE_REMOTE_URL="https://github.com/yongc2025/vibe-coding-cn.git"
 
+# ── 网络诊断结果（全局） ──────────────────────────────────────
+# ok = 成功 | network = 网络不通 | auth = 认证/权限问题 | unknown = 其他
+VIBE_CLONE_DIAGNOSIS=""
+
 # ── 帮助 ──────────────────────────────────────────────────────
 usage() {
     cat <<EOF
@@ -59,6 +63,71 @@ EOF
     exit 0
 }
 
+# ── 网络连通性检测 ────────────────────────────────────────────
+# 检测是否能访问 GitHub，结果写入全局变量 VIBE_CLONE_DIAGNOSIS
+check_github_connectivity() {
+    local err_output="$1"
+
+    # 1. 快速检测：能否解析 GitHub 域名
+    if ! host github.com >/dev/null 2>&1 && ! nslookup github.com >/dev/null 2>&1; then
+        VIBE_CLONE_DIAGNOSIS="network"
+        return
+    fi
+
+    # 2. 快速检测：能否建立 HTTPS 连接
+    if ! curl -sI --connect-timeout 5 --max-time 10 https://github.com >/dev/null 2>&1; then
+        VIBE_CLONE_DIAGNOSIS="network"
+        return
+    fi
+
+    # 3. 从 git clone 错误输出判断
+    if echo "$err_output" | grep -qiE "timeout|timed out|couldn't connect|couldn't resolve|network|connection refused|Connection reset|proxy|SSL|certificate"; then
+        VIBE_CLONE_DIAGNOSIS="network"
+        return
+    fi
+
+    # 4. 认证/权限问题
+    if echo "$err_output" | grep -qiE "authentication|permission|403|401|fatal: unable to access"; then
+        VIBE_CLONE_DIAGNOSIS="auth"
+        return
+    fi
+
+    # 5. 其他
+    VIBE_CLONE_DIAGNOSIS="unknown"
+}
+
+# ── 打印网络问题指引 ──────────────────────────────────────────
+print_network_help() {
+    echo ""
+    echo -e "${RED}═══════════════════════════════════════════════════${NC}"
+    echo -e "${RED}  ❌ 网络无法访问 GitHub${NC}"
+    echo -e "${RED}═══════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "  脚本需要从 GitHub 下载母机资源，但当前网络不通。"
+    echo ""
+    echo -e "${YELLOW}  解决方案（任选其一）：${NC}"
+    echo ""
+    echo -e "  ${GREEN}方案 1：设置代理后重试${NC}"
+    echo -e "    export https_proxy=http://127.0.0.1:7890"
+    echo -e "    export http_proxy=http://127.0.0.1:7890"
+    echo -e "    bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot"
+    echo ""
+    echo -e "  ${GREEN}方案 2：手动克隆母机到本地${NC}"
+    echo -e "    # 先用代理或其他方式把母机 clone 下来"
+    echo -e "    git clone --depth 1 $VIBE_REMOTE_URL ~/vibe-coding-cn"
+    echo -e "    # 然后再运行脚本（会自动检测到本地母机）"
+    echo -e "    bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot"
+    echo ""
+    echo -e "  ${GREEN}方案 3：用 GitHub 镜像${NC}"
+    echo -e "    git clone --depth 1 https://ghproxy.com/$VIBE_REMOTE_URL ~/vibe-coding-cn"
+    echo -e "    bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot"
+    echo ""
+    echo -e "  ${GREEN}方案 4：设置环境变量指向已有母机${NC}"
+    echo -e "    export VIBE_MACHINE_DIR=/path/to/vibe-coding-cn"
+    echo -e "    bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot"
+    echo ""
+}
+
 # ── 母机目录检测 ──────────────────────────────────────────────
 # 优先级: VIBE_MACHINE_DIR 环境变量 > 脚本所在目录 > 默认路径 > 远程下载
 detect_machine_dir() {
@@ -91,17 +160,25 @@ detect_machine_dir() {
     echo -e "${YELLOW}本地未找到母机，正在从 GitHub 下载...${NC}" >&2
     local temp_dir
     temp_dir=$(mktemp -d)
+    local clone_err
+    clone_err=$(mktemp)
+
     if git clone --depth 1 --filter=blob:none --sparse \
-        "$VIBE_REMOTE_URL" "$temp_dir/vibe-coding-cn" 2>/dev/null; then
+        "$VIBE_REMOTE_URL" "$temp_dir/vibe-coding-cn" 2>"$clone_err"; then
         (cd "$temp_dir/vibe-coding-cn" && \
          git sparse-checkout set assets/skills assets/config assets/workflow 2>/dev/null) || true
         # 验证下载成功
         if [ -d "$temp_dir/vibe-coding-cn/assets/skills" ]; then
             echo -e "${GREEN}✓ 母机已下载到: $temp_dir/vibe-coding-cn${NC}" >&2
+            rm -f "$clone_err"
             echo "$temp_dir/vibe-coding-cn"
             return
         fi
     fi
+
+    # clone 失败，诊断原因
+    check_github_connectivity "$(cat "$clone_err" 2>/dev/null)"
+    rm -f "$clone_err"
 
     # 全部失败
     echo ""
@@ -417,12 +494,20 @@ esac
 # ── 检测母机 ──────────────────────────────────────────────────
 MACHINE_DIR=$(detect_machine_dir)
 if [ -z "$MACHINE_DIR" ]; then
-    echo -e "${RED}错误: 无法获取母机${NC}"
-    echo "请通过以下方式之一提供母机："
-    echo "  1. 设置环境变量: export VIBE_MACHINE_DIR=/path/to/vibe-coding-cn"
-    echo "  2. 在母机目录内运行此脚本"
-    echo "  3. 将母机克隆到 ~/vibe-coding-cn"
-    echo "  4. 确保网络可访问 GitHub"
+    case "$VIBE_CLONE_DIAGNOSIS" in
+        network)
+            print_network_help
+            ;;
+        *)
+            echo -e "${RED}错误: 无法获取母机${NC}"
+            echo ""
+            echo "请通过以下方式之一提供母机："
+            echo "  1. 设置环境变量: export VIBE_MACHINE_DIR=/path/to/vibe-coding-cn"
+            echo "  2. 在母机目录内运行此脚本"
+            echo "  3. 将母机克隆到 ~/vibe-coding-cn"
+            echo "  4. 确保网络可访问 GitHub"
+            ;;
+    esac
     exit 1
 fi
 
