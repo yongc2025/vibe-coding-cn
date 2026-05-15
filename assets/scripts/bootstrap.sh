@@ -71,7 +71,10 @@ detect_source() {
         "$HOME/projects/vibe-coding-cn" \
         "$HOME/workspace/vibe-coding-cn" \
         "$HOME/repos/vibe-coding-cn" \
-        "/root/.openclaw/workspace/vibe-coding-cn"; do
+        "/root/.openclaw/workspace/vibe-coding-cn" \
+        "D:/workspace/vibe-coding-cn" \
+        "/d/workspace/vibe-coding-cn" \
+        "/mnt/d/workspace/vibe-coding-cn"; do
         if [[ -d "$path/assets/skills" ]]; then
             echo "$path"
             return
