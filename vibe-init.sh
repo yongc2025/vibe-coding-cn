@@ -9,6 +9,9 @@ set -e
 # ── 颜色 ──────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 
+# ── 母机远程地址 ──────────────────────────────────────────────
+VIBE_REMOTE_URL="https://github.com/yongc2025/vibe-coding-cn.git"
+
 # ── 帮助 ──────────────────────────────────────────────────────
 usage() {
     cat <<EOF
@@ -57,7 +60,7 @@ EOF
 }
 
 # ── 母机目录检测 ──────────────────────────────────────────────
-# 优先级: VIBE_MACHINE_DIR 环境变量 > 脚本所在目录 > 默认路径
+# 优先级: VIBE_MACHINE_DIR 环境变量 > 脚本所在目录 > 默认路径 > 远程下载
 detect_machine_dir() {
     # 1. 用户显式设置的环境变量
     if [ -n "$VIBE_MACHINE_DIR" ] && [ -d "$VIBE_MACHINE_DIR/assets/skills" ]; then
@@ -83,6 +86,24 @@ detect_machine_dir() {
         echo "$ws_dir"
         return
     fi
+
+    # 5. 本地找不到，从远程下载（sparse checkout，只拉需要的目录）
+    echo -e "${YELLOW}本地未找到母机，正在从 GitHub 下载...${NC}" >&2
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    if git clone --depth 1 --filter=blob:none --sparse \
+        "$VIBE_REMOTE_URL" "$temp_dir/vibe-coding-cn" 2>/dev/null; then
+        (cd "$temp_dir/vibe-coding-cn" && \
+         git sparse-checkout set assets/skills assets/config assets/workflow 2>/dev/null) || true
+        # 验证下载成功
+        if [ -d "$temp_dir/vibe-coding-cn/assets/skills" ]; then
+            echo -e "${GREEN}✓ 母机已下载到: $temp_dir/vibe-coding-cn${NC}" >&2
+            echo "$temp_dir/vibe-coding-cn"
+            return
+        fi
+    fi
+
+    # 全部失败
     echo ""
 }
 
@@ -396,11 +417,12 @@ esac
 # ── 检测母机 ──────────────────────────────────────────────────
 MACHINE_DIR=$(detect_machine_dir)
 if [ -z "$MACHINE_DIR" ]; then
-    echo -e "${RED}错误: 找不到母机目录${NC}"
+    echo -e "${RED}错误: 无法获取母机${NC}"
     echo "请通过以下方式之一提供母机："
     echo "  1. 设置环境变量: export VIBE_MACHINE_DIR=/path/to/vibe-coding-cn"
     echo "  2. 在母机目录内运行此脚本"
     echo "  3. 将母机克隆到 ~/vibe-coding-cn"
+    echo "  4. 确保网络可访问 GitHub"
     exit 1
 fi
 
