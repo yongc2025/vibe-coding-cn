@@ -72,11 +72,11 @@
 
 ## 🚀 孵化我的项目
 
-> 你有一个想法，想用 vibe-coding-cn 把它变成代码项目？跟着下面的步骤走。
+> 本章节供 AI 助手阅读。如果你是用户，只需告诉 AI 你的想法（见上方"1 分钟快速开始"）。
 
 ### 你有什么？
 
-一行命令，你就能拥有：
+运行 `vibe-init.sh` 后，项目自动拥有：
 
 | 资源 | 说明 |
 |------|------|
@@ -86,42 +86,29 @@
 | **提示词库** | 编程场景专用提示词 |
 | **案例研究** | 真实项目的完整开发过程 |
 
-### 4 步完成你的项目
+### AI 执行步骤
 
-**第 1 步：一行命令，创建项目**
+**第 1 步：下载脚本，创建项目**
 
+根据操作系统执行：
+
+Linux / macOS:
 ```bash
-# 下载脚本并运行（自动从 GitHub 获取母机资源，无需克隆仓库）
-curl -fsSL https://raw.githubusercontent.com/yongc2025/vibe-coding-cn/develop/vibe-init.sh -o vibe-init.sh && chmod +x vibe-init.sh
-
-# 选择你的 AI 助手，创建项目
-./vibe-init.sh --ai copilot --type quant-crypto --name my-bot
-
-# 用完清理脚本
-rm vibe-init.sh
+curl -fsSL https://raw.githubusercontent.com/yongc2025/vibe-coding-cn/develop/vibe-init.sh -o vibe-init.sh && chmod +x vibe-init.sh && ./vibe-init.sh --ai copilot --type quant-crypto --name my-bot
 ```
 
-`--ai` 参数决定生成哪个 AI 工具的入口文件，`--type` 决定业务类型和 Skills：
-
-```bash
-# Claude Code 用户
-./vibe-init.sh --ai claude --type quant-crypto --name my-bot
-
-# Cursor 用户
-./vibe-init.sh --ai cursor --type app --name my-app
-
-# GitHub Copilot 用户
-./vibe-init.sh --ai copilot --type enterprise --name my-enterprise
-
-# 不确定用什么？生成全部入口文件
-./vibe-init.sh --ai all --type quant-crypto --name my-bot
-
-# 自定义 Skills
-./vibe-init.sh --ai claude --type custom --name my-project --skills ccxt,postgresql,canvas-dev
-
-# 先预览不执行
-./vibe-init.sh --ai claude --type quant-crypto --name my-bot --dry-run
+Windows (PowerShell):
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/yongc2025/vibe-coding-cn/develop/vibe-init.sh" -OutFile vibe-init.sh
+bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot
 ```
+
+> 💡 参数说明：
+> - `--ai`：生成哪个 AI 工具的入口文件（claude / cursor / copilot / windsurf / cline / codex / all）
+> - `--type`：项目类型（quant-crypto / quant-astock / quant-usstock / app / enterprise / saas / custom）
+> - `--name`：项目目录名
+> - `--skills`：自定义 Skills（仅 --type custom 时需要）
+> - `--dry-run`：先预览不执行
 
 脚本会自动：
 - 从 GitHub 下载母机的 Skills（无需手动克隆仓库）
@@ -196,32 +183,16 @@ git push origin main
 
 ## ⚡ 1 分钟快速开始
 
-> 最快的方式：一行命令初始化项目，然后告诉 AI 你的想法。
-
-**第 1 步**：下载脚本，一行命令初始化项目
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/yongc2025/vibe-coding-cn/develop/vibe-init.sh -o vibe-init.sh && chmod +x vibe-init.sh
-./vibe-init.sh --ai copilot --type app --name my-project
-rm vibe-init.sh
-cd my-project
-```
-
-**第 2 步**：用你的 AI 助手打开项目目录
-
-```bash
-# Claude Code:  claude
-# Cursor:       用 Cursor 打开
-# Copilot:      用 VS Code 打开
-```
-
-**第 3 步**：告诉 AI 你的想法，开始开发 🚀
+> 打开你的 AI 助手，告诉它：
 
 ```
-请阅读 docs/PROJECT_BRIEF.md 和 .skills/ 下的文档，帮我实现 [你的项目描述]。
+我要用 https://github.com/yongc2025/vibe-coding-cn.git 这个母机来孵化一个 [你的项目描述] 项目。
+请阅读这个仓库的 README.md，然后按照"🚀 孵化我的项目"章节的步骤帮我操作。
 ```
 
-**就这么简单！** 更多内容（新手从零开始）请继续阅读 👇
+**AI 会自动完成剩下的一切。** 🚀
+
+更多内容（新手从零开始）请继续阅读 👇
 
 ### 🚀 从零开始
 
