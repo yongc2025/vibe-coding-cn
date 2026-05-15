@@ -512,7 +512,7 @@ for skill in "${SKILLS[@]}"; do
     if [ -d "$src" ]; then
         run cp -r "$src" "$FULL_PATH/.skills/$skill"
         echo -e "  ${GREEN}✓${NC} $skill"
-        ((SKILL_COUNT++))
+        ((SKILL_COUNT++)) || true
     else
         echo -e "  ${YELLOW}⚠${NC} 技能不存在: $skill（跳过）"
     fi
