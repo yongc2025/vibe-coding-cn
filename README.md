@@ -203,7 +203,7 @@ bash ~/vibe-coding-cn/vibe-init.sh --help
 
 ```powershell
 # Windows PowerShell（需先安装 Git for Windows 以获得 bash）：
-git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git "$HOME\vibe-coding-cn"
+git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git "$HOME/vibe-coding-cn"
 bash "$HOME/vibe-coding-cn/vibe-init.sh" --help
 ```
 
