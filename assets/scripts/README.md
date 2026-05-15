@@ -88,20 +88,42 @@ ls ~/vibe-coding-cn/assets/skills/ | wc -l   # 应该输出 36
 
 ## 三、一键拉取
 
-### 基本用法
+### Windows 用户
+
+```powershell
+# 在新项目目录下执行
+cd D:\projects\my-new-app
+
+# 拉取 SaaS 技能（自动检测母盘位置 D:\workspace\vibe-coding-cn）
+powershell -ExecutionPolicy Bypass -File D:\workspace\vibe-coding-cn\assets\scripts\bootstrap.ps1 -Profile saas
+
+# 拉取技能 + 工作流
+powershell -ExecutionPolicy Bypass -File D:\workspace\vibe-coding-cn\assets\scripts\bootstrap.ps1 -Profile saas -Workflow
+
+# 预览（不实际复制）
+powershell -ExecutionPolicy Bypass -File D:\workspace\vibe-coding-cn\assets\scripts\bootstrap.ps1 -Profile saas -DryRun
+
+# 全量拉取
+powershell -ExecutionPolicy Bypass -File D:\workspace\vibe-coding-cn\assets\scripts\bootstrap.ps1 -All -Workflow
+```
+
+### macOS / Linux 用户
 
 ```bash
 # 进入你的新项目目录
 cd ~/projects/my-new-app
 
-# 拉取对应业务线的技能
+# 拉取 SaaS 技能（自动检测母盘位置）
 bash ~/vibe-coding-cn/assets/scripts/bootstrap.sh -p saas
-```
 
-### 拉取技能 + 工作流模板
-
-```bash
+# 拉取技能 + 工作流
 bash ~/vibe-coding-cn/assets/scripts/bootstrap.sh -p saas -w
+
+# 预览（不实际复制）
+bash ~/vibe-coding-cn/assets/scripts/bootstrap.sh -p saas -d
+
+# 全量拉取
+bash ~/vibe-coding-cn/assets/scripts/bootstrap.sh -a -w
 ```
 
 ### 可用 Profile
