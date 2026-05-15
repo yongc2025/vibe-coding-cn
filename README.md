@@ -193,15 +193,22 @@ git push origin main
 
 ## ⚡ 1 分钟快速开始
 
-> **第 1 步：在终端运行以下命令，下载并执行初始化脚本：**
+> **在终端运行以下命令（不要让 AI 代劳，AI 无法可靠下载大文件）：**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yongc2025/vibe-coding-cn/develop/vibe-init.sh -o vibe-init.sh && chmod +x vibe-init.sh && ./vibe-init.sh --ai copilot --type quant-crypto --name web3-meme-hunter
+# 1. 克隆母机仓库
+git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git ~/vibe-coding-cn
+
+# 2. 运行初始化脚本（修改 --name 为你的项目名）
+bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name web3-meme-hunter
+
+# 3. 进入项目目录
+cd web3-meme-hunter
 ```
 
-> 💡 修改参数：`--type` 改项目类型，`--name` 改项目名，`--ai` 改 AI 工具
+> 💡 参数说明：`--type` 改项目类型，`--name` 改项目名，`--ai` 改 AI 工具
 >
-> **第 2 步：脚本运行完成后，打开项目目录，告诉 AI：**
+> **脚本运行完成后，打开项目目录，告诉 AI：**
 > 「阅读 docs/PROJECT_BRIEF.md 和 .skills/ 下的 SKILL.md，然后开始开发」
 
 **脚本会自动完成所有初始化工作。** 🚀
