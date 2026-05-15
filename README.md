@@ -219,11 +219,30 @@ bash ~/vibe-coding-cn/vibe-init.sh --ai <AI工具> --type <项目类型> --name 
 bash "$HOME/vibe-coding-cn/vibe-init.sh" --ai <AI工具> --type <项目类型> --name <项目名>
 ```
 
-> 💡 示例：`bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name my-bot`（Windows 用 `bash "$HOME/vibe-coding-cn/vibe-init.sh" ...`）
+> **常用示例：**
+>
+> ```bash
+> # 加密货币量化 + Copilot
+> bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name my-bot
+>
+> # A股量化 + Claude
+> bash ~/vibe-coding-cn/vibe-init.sh --ai claude --type quant-astock --name my-stock-bot
+>
+> # APP开发 + Cursor
+> bash ~/vibe-coding-cn/vibe-init.sh --ai cursor --type app --name my-app
+>
+> # 自定义技能 + 全部AI工具
+> bash ~/vibe-coding-cn/vibe-init.sh --ai all --type custom --name my-project --skills ccxt,postgresql,telegram-dev
+>
+> # 先预览不执行
+> bash ~/vibe-coding-cn/vibe-init.sh --type quant-crypto --name my-bot --dry-run
+> ```
+>
+> Windows 用户把 `~/vibe-coding-cn` 换成 `"$HOME/vibe-coding-cn"` 即可。
 
 > ⚠️ **Windows 用户须知**：`vibe-init.sh` 是 Bash 脚本，不能直接在 CMD/PowerShell 中用 `./vibe-init.sh` 执行，必须通过 `bash` 调用。请确保已安装 [Git for Windows](https://git-scm.com/download/win)（自带 Git Bash）。
 
-> 💡 示例：`bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name my-bot`
+> 💡 运行 `bash vibe-init.sh --help` 查看全部参数说明。
 >
 > **脚本运行完成后，进入项目目录，告诉 AI：**
 > 「阅读 docs/PROJECT_BRIEF.md 和 .skills/ 下的 SKILL.md，然后开始开发」
