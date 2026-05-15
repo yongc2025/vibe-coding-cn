@@ -207,6 +207,20 @@ git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git "$HOME/vibe-
 bash "$HOME/vibe-coding-cn/vibe-init.sh" --help
 ```
 
+> 💡 **不想克隆仓库？** 也可以直接下载脚本运行（脚本会自动从 GitHub 下载所需资源）：
+>
+> ```powershell
+> # Windows PowerShell：
+> Invoke-WebRequest -Uri "https://raw.githubusercontent.com/yongc2025/vibe-coding-cn/develop/vibe-init.sh" -OutFile vibe-init.sh
+> bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot
+> ```
+>
+> ```bash
+> # Linux / macOS / Git Bash：
+> curl -fsSL https://raw.githubusercontent.com/yongc2025/vibe-coding-cn/develop/vibe-init.sh -o vibe-init.sh
+> bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot
+> ```
+
 运行 `--help` 查看所有参数后，执行初始化：
 
 ```bash
