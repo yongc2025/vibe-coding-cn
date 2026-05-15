@@ -1,25 +1,24 @@
 #!/bin/bash
 # ============================================================
-# vibe-init.sh — 从母机初始化新项目
+# vibe-init.sh — 从母机初始化新项目（完整孵化版）
 # 用法: ./vibe-init.sh --ai <助手> --type <类型> [--name <项目名>] [--skills <额外技能>]
 # ============================================================
 
 set -e
 
 # ── 颜色 ──────────────────────────────────────────────────────
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
 
 # ── 母机远程地址 ──────────────────────────────────────────────
 VIBE_REMOTE_URL="https://github.com/yongc2025/vibe-coding-cn.git"
 
 # ── 网络诊断结果（全局） ──────────────────────────────────────
-# ok = 成功 | network = 网络不通 | auth = 认证/权限问题 | unknown = 其他
 VIBE_CLONE_DIAGNOSIS=""
 
 # ── 帮助 ──────────────────────────────────────────────────────
 usage() {
     cat <<EOF
-${BLUE}vibe-init.sh${NC} — 从母机初始化新项目
+${BLUE}vibe-init.sh${NC} — 从母机初始化新项目（完整孵化版）
 
 ${YELLOW}用法:${NC}
   ./vibe-init.sh --ai <助手> --type <类型> [选项]
@@ -48,9 +47,10 @@ ${YELLOW}选项:${NC}
   --name <名称>       项目目录名（默认: my-<类型>-project）
   --dir <路径>        项目创建目录（默认: 当前目录）
   --skills <技能列表>  额外技能，逗号分隔
-  --no-workflow     不复制 auto-dev-loop 工作流（默认复制）
+  --no-workflow       不复制 auto-dev-loop 工作流（默认复制）
   --no-codex          不复制 .codex/ 配置
   --no-agents         不复制 AGENTS.md
+  --no-docs           不复制方法论文档和案例研究
   --dry-run           只显示会做什么，不实际执行
   --help              显示此帮助
 
@@ -64,35 +64,24 @@ EOF
 }
 
 # ── 网络连通性检测 ────────────────────────────────────────────
-# 检测是否能访问 GitHub，结果写入全局变量 VIBE_CLONE_DIAGNOSIS
 check_github_connectivity() {
     local err_output="$1"
-
-    # 1. 快速检测：能否解析 GitHub 域名
     if ! host github.com >/dev/null 2>&1 && ! nslookup github.com >/dev/null 2>&1; then
         VIBE_CLONE_DIAGNOSIS="network"
         return
     fi
-
-    # 2. 快速检测：能否建立 HTTPS 连接
     if ! curl -sI --connect-timeout 5 --max-time 10 https://github.com >/dev/null 2>&1; then
         VIBE_CLONE_DIAGNOSIS="network"
         return
     fi
-
-    # 3. 从 git clone 错误输出判断
     if echo "$err_output" | grep -qiE "timeout|timed out|couldn't connect|couldn't resolve|network|connection refused|Connection reset|proxy|SSL|certificate"; then
         VIBE_CLONE_DIAGNOSIS="network"
         return
     fi
-
-    # 4. 认证/权限问题
     if echo "$err_output" | grep -qiE "authentication|permission|403|401|fatal: unable to access"; then
         VIBE_CLONE_DIAGNOSIS="auth"
         return
     fi
-
-    # 5. 其他
     VIBE_CLONE_DIAGNOSIS="unknown"
 }
 
@@ -113,9 +102,7 @@ print_network_help() {
     echo -e "    bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot"
     echo ""
     echo -e "  ${GREEN}方案 2：手动克隆母机到本地${NC}"
-    echo -e "    # 先用代理或其他方式把母机 clone 下来"
     echo -e "    git clone --depth 1 $VIBE_REMOTE_URL ~/vibe-coding-cn"
-    echo -e "    # 然后再运行脚本（会自动检测到本地母机）"
     echo -e "    bash vibe-init.sh --ai copilot --type quant-crypto --name my-bot"
     echo ""
     echo -e "  ${GREEN}方案 3：用 GitHub 镜像${NC}"
@@ -129,34 +116,28 @@ print_network_help() {
 }
 
 # ── 母机目录检测 ──────────────────────────────────────────────
-# 优先级: VIBE_MACHINE_DIR 环境变量 > 脚本所在目录 > 默认路径 > 远程下载
 detect_machine_dir() {
-    # 1. 用户显式设置的环境变量
     if [ -n "$VIBE_MACHINE_DIR" ] && [ -d "$VIBE_MACHINE_DIR/assets/skills" ]; then
         echo "$VIBE_MACHINE_DIR"
         return
     fi
-    # 2. 脚本所在目录（用户在母机目录内运行脚本）
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     if [ -d "$script_dir/assets/skills" ]; then
         echo "$script_dir"
         return
     fi
-    # 3. 默认路径
     local default_dir="$HOME/vibe-coding-cn"
     if [ -d "$default_dir/assets/skills" ]; then
         echo "$default_dir"
         return
     fi
-    # 4. workspace 路径
     local ws_dir="$HOME/.openclaw/workspace/vibe-coding-cn"
     if [ -d "$ws_dir/assets/skills" ]; then
         echo "$ws_dir"
         return
     fi
 
-    # 5. 本地找不到，从远程下载（sparse checkout，只拉需要的目录）
     echo -e "${YELLOW}本地未找到母机，正在从 GitHub 下载...${NC}" >&2
     local temp_dir
     temp_dir=$(mktemp -d)
@@ -166,8 +147,7 @@ detect_machine_dir() {
     if git clone --depth 1 --filter=blob:none --sparse \
         "$VIBE_REMOTE_URL" "$temp_dir/vibe-coding-cn" 2>"$clone_err"; then
         (cd "$temp_dir/vibe-coding-cn" && \
-         git sparse-checkout set assets/skills assets/config assets/workflow 2>/dev/null) || true
-        # 验证下载成功
+         git sparse-checkout set assets/skills assets/config assets/workflow assets/documents assets/prompts assets/scripts docs/onboarding 2>/dev/null) || true
         if [ -d "$temp_dir/vibe-coding-cn/assets/skills" ]; then
             echo -e "${GREEN}✓ 母机已下载到: $temp_dir/vibe-coding-cn${NC}" >&2
             rm -f "$clone_err"
@@ -176,11 +156,8 @@ detect_machine_dir() {
         fi
     fi
 
-    # clone 失败，诊断原因
     check_github_connectivity "$(cat "$clone_err" 2>/dev/null)"
     rm -f "$clone_err"
-
-    # 全部失败
     echo ""
 }
 
@@ -193,60 +170,10 @@ TYPE_SKILLS[app]="canvas-dev,ddd-doc-steward,snapdom"
 TYPE_SKILLS[enterprise]="canvas-dev,ddd-doc-steward,sop-generator,postgresql,claude-cookbooks"
 TYPE_SKILLS[saas]="canvas-dev,ddd-doc-steward,sop-generator,postgresql,telegram-dev,snapdom"
 
-# 所有类型共用的基础技能
 BASE_SKILLS="skills-skills,sop-generator,canvas-dev,headless-cli"
 
 # ── AI 助手入口文件生成 ───────────────────────────────────────
-# 生成通用的入口文件内容（被各 AI 工具读取）
-generate_ai_entry_content() {
-    local skill_list="$1"
-    local ai_name="$2"
-    cat <<EOF
-# ${ai_name} — vibe-coding-cn 孵化项目
 
-> 本文件由 vibe-init.sh 自动生成。
-> Skills 来自母机 vibe-coding-cn，位于 .skills/ 目录。
-
----
-
-## 通用规则
-
-1. **先读 Skills 再动手** — 每个 SKILL.md 包含该领域的完整知识
-2. **文档先行，接口先行，实现后补** — 先定义输入输出
-3. **一次只改一个模块** — 保持专注
-4. **Debug 只给**：预期 vs 实际 + 最小复现
-
-## 开发顺序
-
-\`\`\`
-接口定义 → 配置管理 → 核心实现 → 数据集成 → 测试验证
-\`\`\`
-
-## 已加载 Skills
-
-EOF
-    # 遍历 skills 列表，提取 description
-    IFS=',' read -ra skills_arr <<< "$skill_list"
-    for skill in "${skills_arr[@]}"; do
-        skill=$(echo "$skill" | xargs)
-        local skill_file=".skills/$skill/SKILL.md"
-        if [ -f "$skill_file" ]; then
-            echo "### $skill" >> /dev/stdout
-            echo "" >> /dev/stdout
-            # 提取 frontmatter 中的 description
-            local desc
-            desc=$(sed -n '/^---$/,/^---$/p' "$skill_file" | grep "description:" | head -1 | sed 's/^description: *//' | sed 's/^"//' | sed 's/"$//')
-            if [ -n "$desc" ]; then
-                echo "$desc" >> /dev/stdout
-            fi
-            echo "" >> /dev/stdout
-            echo "📖 详细文档: .skills/$skill/SKILL.md" >> /dev/stdout
-            echo "" >> /dev/stdout
-        fi
-    done
-}
-
-# 生成 CLAUDE.md（Claude Code 专用）
 generate_claude_md() {
     local full_path="$1"
     local skill_list="$2"
@@ -274,7 +201,6 @@ generate_claude_md() {
 ## 参考技能
 
 EOF
-    # 添加 skills 引用
     IFS=',' read -ra skills_arr <<< "$skill_list"
     for skill in "${skills_arr[@]}"; do
         skill=$(echo "$skill" | xargs)
@@ -293,11 +219,17 @@ EOF
 2. **现状**：当前是什么情况？
 3. **差距**：从现状到目标，缺什么？
 4. **判断标准**：怎么知道做完了？
+
+## 参考资料
+
+- 方法论文档：`docs/reference/principles/`
+- 案例研究：`docs/reference/case-studies/`
+- 提示词库：`docs/reference/prompts/`
+- 开发指南：`docs/reference/guides/`
 EOF
     echo -e "  ${GREEN}✓${NC} CLAUDE.md"
 }
 
-# 生成 .cursorrules（Cursor 专用）
 generate_cursorrules() {
     local full_path="$1"
     local skill_list="$2"
@@ -336,7 +268,6 @@ EOF
     echo -e "  ${GREEN}✓${NC} .cursorrules"
 }
 
-# 生成 .github/copilot-instructions.md（Copilot 专用）
 generate_copilot_instructions() {
     local full_path="$1"
     local skill_list="$2"
@@ -376,7 +307,6 @@ EOF
     echo -e "  ${GREEN}✓${NC} .github/copilot-instructions.md"
 }
 
-# 生成 .windsurfrules（Windsurf 专用）
 generate_windsurfrules() {
     local full_path="$1"
     local skill_list="$2"
@@ -408,7 +338,6 @@ EOF
     echo -e "  ${GREEN}✓${NC} .windsurfrules"
 }
 
-# 生成 .clinerules（Cline 专用）
 generate_clinerules() {
     local full_path="$1"
     local skill_list="$2"
@@ -440,7 +369,6 @@ EOF
     echo -e "  ${GREEN}✓${NC} .clinerules"
 }
 
-# 生成 AGENTS.md（Codex/OpenClaw 专用）
 generate_agents_md() {
     local full_path="$1"
     local skill_list="$2"
@@ -460,6 +388,7 @@ EXTRA_SKILLS=""
 WITH_WORKFLOW=true
 NO_CODEX=false
 NO_AGENTS=false
+NO_DOCS=false
 DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
@@ -472,6 +401,7 @@ while [[ $# -gt 0 ]]; do
         --no-workflow) WITH_WORKFLOW=false; shift ;;
         --no-codex)   NO_CODEX=true; shift ;;
         --no-agents)  NO_AGENTS=true; shift ;;
+        --no-docs)    NO_DOCS=true; shift ;;
         --dry-run)    DRY_RUN=true; shift ;;
         --help|-h)    usage ;;
         *)            echo -e "${RED}未知参数: $1${NC}"; usage ;;
@@ -483,7 +413,6 @@ if [ -z "$TYPE" ]; then
     usage
 fi
 
-# 验证 --ai 参数
 case "$AI_TYPE" in
     claude|cursor|copilot|windsurf|cline|codex|all) ;;
     *)  echo -e "${RED}错误: 未知的 AI 助手类型: $AI_TYPE${NC}"
@@ -495,9 +424,7 @@ esac
 MACHINE_DIR=$(detect_machine_dir)
 if [ -z "$MACHINE_DIR" ]; then
     case "$VIBE_CLONE_DIAGNOSIS" in
-        network)
-            print_network_help
-            ;;
+        network) print_network_help ;;
         *)
             echo -e "${RED}错误: 无法获取母机${NC}"
             echo ""
@@ -519,8 +446,6 @@ fi
 if [ -n "$EXTRA_SKILLS" ]; then
     SKILLS_LIST="$SKILLS_LIST,$EXTRA_SKILLS"
 fi
-
-# 去重
 SKILLS_LIST=$(echo "$SKILLS_LIST" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
 
 # ── 项目目录 ──────────────────────────────────────────────────
@@ -529,15 +454,15 @@ if [ -z "$PROJECT_NAME" ]; then
 fi
 FULL_PATH="$PROJECT_DIR/$PROJECT_NAME"
 
-echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}  vibe-init — 从母机初始化项目${NC}"
-echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
+echo ""
+echo -e "${CYAN}╔═══════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║   vibe-init — 从母机孵化项目（完整版）           ║${NC}"
+echo -e "${CYAN}╚═══════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "  ${YELLOW}类型:${NC}     $TYPE"
 echo -e "  ${YELLOW}AI 助手:${NC}  $AI_TYPE"
 echo -e "  ${YELLOW}项目:${NC}     $FULL_PATH"
 echo -e "  ${YELLOW}技能:${NC}     $SKILLS_LIST"
-echo -e "  ${YELLOW}工作流:${NC}   $WITH_WORKFLOW"
 echo -e "  ${YELLOW}母机:${NC}     $MACHINE_DIR"
 echo ""
 
@@ -546,7 +471,6 @@ if $DRY_RUN; then
     echo ""
 fi
 
-# ── 辅助函数 ──────────────────────────────────────────────────
 run() {
     if $DRY_RUN; then
         echo -e "  ${BLUE}[DRY]${NC} $*"
@@ -555,38 +479,203 @@ run() {
     fi
 }
 
-# ── 步骤 1: 创建项目目录 ─────────────────────────────────────
-echo -e "${GREEN}[1/7] 创建项目目录...${NC}"
-run mkdir -p "$FULL_PATH"
+# =============================================================
+#  完整孵化流程 — 9 步
+# =============================================================
 
-# ── 步骤 2: 复制 .codex/ ─────────────────────────────────────
+# ── [1/9] 创建项目骨架 ───────────────────────────────────────
+echo -e "${GREEN}[1/9] 创建项目骨架...${NC}"
+run mkdir -p "$FULL_PATH"/{docs,src,tests}
+
+# ── [2/9] 复制 .codex/ 配置 ──────────────────────────────────
 if ! $NO_CODEX; then
-    echo -e "${GREEN}[2/7] 复制 .codex/ 配置...${NC}"
+    echo -e "${GREEN}[2/9] 复制 .codex/ 配置...${NC}"
     if [ -d "$MACHINE_DIR/assets/config/.codex" ]; then
         run cp -r "$MACHINE_DIR/assets/config/.codex" "$FULL_PATH/.codex"
     fi
 else
-    echo -e "${GREEN}[2/7] 跳过 .codex/ 配置${NC}"
+    echo -e "${GREEN}[2/9] 跳过 .codex/ 配置${NC}"
 fi
 
-# ── 步骤 3: 复制 Skills ─────────────────────────────────────
-echo -e "${GREEN}[3/7] 复制 Skills...${NC}"
+# ── [3/9] 复制 Skills ───────────────────────────────────────
+echo -e "${GREEN}[3/9] 复制 Skills...${NC}"
 run mkdir -p "$FULL_PATH/.skills"
 IFS=',' read -ra SKILLS <<< "$SKILLS_LIST"
+SKILL_COUNT=0
 for skill in "${SKILLS[@]}"; do
     skill=$(echo "$skill" | xargs)
     src="$MACHINE_DIR/assets/skills/$skill"
     if [ -d "$src" ]; then
         run cp -r "$src" "$FULL_PATH/.skills/$skill"
         echo -e "  ${GREEN}✓${NC} $skill"
+        ((SKILL_COUNT++))
     else
         echo -e "  ${YELLOW}⚠${NC} 技能不存在: $skill（跳过）"
     fi
 done
 
-# ── 步骤 4: 生成 AI 助手入口文件 ─────────────────────────────
-echo -e "${GREEN}[4/7] 生成 AI 助手入口文件...${NC}"
+# ── [4/9] 复制工作流 ────────────────────────────────────────
+if $WITH_WORKFLOW; then
+    echo -e "${GREEN}[4/9] 复制开发工作流...${NC}"
+    if [ -d "$MACHINE_DIR/assets/workflow/auto-dev-loop" ]; then
+        run cp -r "$MACHINE_DIR/assets/workflow/auto-dev-loop" "$FULL_PATH/.workflow/auto-dev-loop"
+        echo -e "  ${GREEN}✓${NC} auto-dev-loop（需求→计划→实施→验证→迭代）"
+    fi
+    if [ -d "$MACHINE_DIR/assets/workflow/canvas-dev" ]; then
+        run cp -r "$MACHINE_DIR/assets/workflow/canvas-dev" "$FULL_PATH/.workflow/canvas-dev"
+        echo -e "  ${GREEN}✓${NC} canvas-dev（白板驱动开发）"
+    fi
+else
+    echo -e "${GREEN}[4/9] 跳过工作流${NC}"
+fi
 
+# ── [5/9] 复制参考文档（方法论 + 案例 + 提示词 + 指南）─────
+if ! $NO_DOCS; then
+    echo -e "${GREEN}[5/9] 复制参考文档...${NC}"
+    run mkdir -p "$FULL_PATH/docs/reference"
+
+    # 方法论文档（核心理念、架构原则、开发经验）
+    if [ -d "$MACHINE_DIR/assets/documents/principles" ]; then
+        run cp -r "$MACHINE_DIR/assets/documents/principles" "$FULL_PATH/docs/reference/principles"
+        echo -e "  ${GREEN}✓${NC} principles/（核心理念 + 架构原则 + 开发经验）"
+    fi
+
+    # 案例研究（真实项目开发过程）
+    if [ -d "$MACHINE_DIR/assets/documents/case-studies" ]; then
+        run cp -r "$MACHINE_DIR/assets/documents/case-studies" "$FULL_PATH/docs/reference/case-studies"
+        echo -e "  ${GREEN}✓${NC} case-studies/（真实项目案例）"
+    fi
+
+    # 入门指南
+    if [ -d "$MACHINE_DIR/assets/documents/guides" ]; then
+        run cp -r "$MACHINE_DIR/assets/documents/guides" "$FULL_PATH/docs/reference/guides"
+        echo -e "  ${GREEN}✓${NC} guides/（入门指南 + 方法手册）"
+    fi
+
+    # 提示词库
+    if [ -d "$MACHINE_DIR/assets/prompts" ]; then
+        run cp -r "$MACHINE_DIR/assets/prompts" "$FULL_PATH/docs/reference/prompts"
+        echo -e "  ${GREEN}✓${NC} prompts/（编程提示词库）"
+    fi
+
+    # 入门文档
+    if [ -d "$MACHINE_DIR/docs/onboarding" ]; then
+        run cp -r "$MACHINE_DIR/docs/onboarding" "$FULL_PATH/docs/reference/onboarding"
+        echo -e "  ${GREEN}✓${NC} onboarding/（孵化指南 + 分步指南）"
+    fi
+
+    # 技能选择器脚本
+    if [ -d "$MACHINE_DIR/assets/scripts" ]; then
+        run mkdir -p "$FULL_PATH/scripts"
+        run cp "$MACHINE_DIR/assets/scripts/skill-picker.py" "$FULL_PATH/scripts/" 2>/dev/null || true
+        echo -e "  ${GREEN}✓${NC} skill-picker.py（技能推荐工具）"
+    fi
+else
+    echo -e "${GREEN}[5/9] 跳过参考文档${NC}"
+fi
+
+# ── [6/9] 创建项目定义模板 ──────────────────────────────────
+echo -e "${GREEN}[6/9] 创建 docs/PROJECT_BRIEF.md...${NC}"
+if ! $DRY_RUN; then
+    cat > "$FULL_PATH/docs/PROJECT_BRIEF.md" << 'BRIEF_EOF'
+# 项目定义 — PROJECT_BRIEF.md
+
+> 请填写以下 4 个问题，帮助 AI 理解你的项目意图。
+> 填写完成后，告诉 AI：「阅读 docs/PROJECT_BRIEF.md，然后开始开发」。
+
+---
+
+## 1. 目标：我要解决什么问题？
+
+<!-- 用 1-3 句话描述你想做的事 -->
+
+
+## 2. 现状：当前是什么情况？
+
+<!-- 现在有什么？已经做了什么？ -->
+
+
+## 3. 差距：从现状到目标，缺什么？
+
+<!-- 技术？数据？接口？设计？ -->
+
+
+## 4. 判断标准：怎么知道做完了？
+
+<!-- 具体的验收条件，越明确越好 -->
+
+---
+
+## 参考资料
+
+填写前，建议先看看：
+- `docs/reference/principles/fundamentals/问题求解能力.md` — 学会定义问题
+- `docs/reference/case-studies/` — 看别人怎么定义项目
+- `docs/reference/guides/getting-started/` — 环境搭建指南
+
+## 可用技能
+
+运行 `ls .skills/` 查看已安装的技能。
+运行 `python scripts/skill-picker.py --list` 查看所有可用技能。
+BRIEF_EOF
+    echo -e "  ${GREEN}✓${NC} docs/PROJECT_BRIEF.md"
+else
+    echo -e "  ${BLUE}[DRY]${NC} 创建 docs/PROJECT_BRIEF.md"
+fi
+
+# ── [7/9] 创建 README ───────────────────────────────────────
+echo -e "${GREEN}[7/9] 创建 README.md...${NC}"
+if ! $DRY_RUN; then
+    cat > "$FULL_PATH/README.md" << README_EOF
+# $PROJECT_NAME
+
+> 由 vibe-coding-cn 母机孵化，$(date +%Y-%m-%d)
+
+## 快速开始
+
+1. 填写 \`docs/PROJECT_BRIEF.md\`（项目定义）
+2. 告诉 AI：「阅读 docs/PROJECT_BRIEF.md，然后开始开发」
+
+## 项目结构
+
+\`\`\`
+$PROJECT_NAME/
+├── .skills/              # AI 领域技能（$SKILL_COUNT 个）
+├── .workflow/             # 自动开发工作流
+├── docs/
+│   ├── PROJECT_BRIEF.md   # 📝 项目定义（待填写）
+│   └── reference/         # 参考文档
+│       ├── principles/    # 核心理念 + 架构原则
+│       ├── case-studies/  # 真实项目案例
+│       ├── guides/        # 入门指南
+│       └── prompts/       # 编程提示词库
+├── src/                   # 源代码
+├── tests/                 # 测试
+└── scripts/               # 工具脚本
+\`\`\`
+
+## 开发流程
+
+\`\`\`
+需求分析 → 实施计划 → 分步实现 → 验证测试 → 迭代
+\`\`\`
+
+参考：\`.workflow/auto-dev-loop/\`
+
+## 技能列表
+
+\`\`\`bash
+ls .skills/
+python scripts/skill-picker.py --list
+\`\`\`
+README_EOF
+    echo -e "  ${GREEN}✓${NC} README.md"
+else
+    echo -e "  ${BLUE}[DRY]${NC} 创建 README.md"
+fi
+
+# ── [8/9] 生成 AI 助手入口文件 ──────────────────────────────
+echo -e "${GREEN}[8/9] 生成 AI 助手入口文件...${NC}"
 if $DRY_RUN; then
     case "$AI_TYPE" in
         claude)  echo -e "  ${BLUE}[DRY]${NC} 将生成 CLAUDE.md" ;;
@@ -625,62 +714,11 @@ else
     esac
 fi
 
-# ── 步骤 5: 复制工作流 ────────────────────────────────────────
-if $WITH_WORKFLOW; then
-    echo -e "${GREEN}[5/7] 复制 auto-dev-loop 工作流...${NC}"
-    if [ -d "$MACHINE_DIR/assets/workflow/auto-dev-loop" ]; then
-        run cp -r "$MACHINE_DIR/assets/workflow/auto-dev-loop" "$FULL_PATH/.workflow/auto-dev-loop"
-        echo -e "  ${GREEN}✓${NC} auto-dev-loop"
-    fi
-else
-    echo -e "${GREEN}[5/7] 跳过工作流${NC}"
-fi
-
-# ── 步骤 6: 创建项目定义模板 ──────────────────────────────────
-echo -e "${GREEN}[6/7] 创建 docs/PROJECT_BRIEF.md...${NC}"
-if ! $DRY_RUN; then
-    run mkdir -p "$FULL_PATH/docs"
-    cat > "$FULL_PATH/docs/PROJECT_BRIEF.md" << 'BRIEF_EOF'
-# 项目定义 — PROJECT_BRIEF.md
-
-> 请填写以下 4 个问题，帮助 AI 理解你的项目意图。
-> 填写完成后，告诉 AI：「阅读 docs/PROJECT_BRIEF.md，然后开始开发」。
-
----
-
-## 1. 目标：我要解决什么问题？
-
-<!-- 用 1-3 句话描述你想做的事 -->
-
-
-## 2. 现状：当前是什么情况？
-
-<!-- 现在有什么？已经做了什么？ -->
-
-
-## 3. 差距：从现状到目标，缺什么？
-
-<!-- 技术？数据？接口？设计？ -->
-
-
-## 4. 判断标准：怎么知道做完了？
-
-<!-- 具体的验收条件，越明确越好 -->
-
----
-
-> 💡 提示：填写完后，运行 `ls .skills/` 查看可用技能，AI 会自动利用这些技能帮你开发。
-BRIEF_EOF
-    echo -e "  ${GREEN}✓${NC} docs/PROJECT_BRIEF.md"
-else
-    echo -e "  ${BLUE}[DRY]${NC} 创建 docs/PROJECT_BRIEF.md"
-fi
-
-# ── 步骤 7: 初始化 Git ───────────────────────────────────────
-echo -e "${GREEN}[7/7] 初始化 Git...${NC}"
+# ── [9/9] 初始化 Git ────────────────────────────────────────
+echo -e "${GREEN}[9/9] 初始化 Git...${NC}"
 if ! $DRY_RUN; then
     if [ ! -d "$FULL_PATH/.git" ]; then
-        (cd "$FULL_PATH" && git init -q && git add -A && git commit -q -m "init: vibe-init from mother machine" 2>/dev/null || true)
+        (cd "$FULL_PATH" && git init -q && git add -A && git commit -q -m "init: vibe-init complete incubation" 2>/dev/null || true)
         echo -e "  ${GREEN}✓${NC} Git 仓库已初始化"
     else
         echo -e "  ${YELLOW}⚠${NC} Git 仓库已存在（跳过）"
@@ -691,32 +729,34 @@ fi
 
 # ── 完成 ─────────────────────────────────────────────────────
 echo ""
-echo -e "${GREEN}═══════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  ✅ 项目初始化完成！${NC}"
-echo -e "${GREEN}═══════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}╔═══════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║   ✅ 项目孵化完成！                               ║${NC}"
+echo -e "${CYAN}╚═══════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  ${YELLOW}进入项目:${NC}  cd $FULL_PATH"
+echo -e "  ${YELLOW}📁 项目目录:${NC}  $FULL_PATH"
 echo ""
-echo -e "  ${YELLOW}下一步:${NC}"
-echo -e "    1. 编辑 ${GREEN}docs/PROJECT_BRIEF.md${NC}，填写项目定义（目标/现状/差距/标准）"
-echo -e "    2. 告诉 AI：「阅读 docs/PROJECT_BRIEF.md，然后开始开发」"
-echo ""
-echo -e "  ${YELLOW}已就绪:${NC}"
-echo -e "    📁 .skills/          — $(ls "$FULL_PATH/.skills/" 2>/dev/null | wc -l | tr -d ' ') 个领域技能"
+echo -e "  ${YELLOW}📦 已就绪:${NC}"
+echo -e "    🔧 .skills/          — $SKILL_COUNT 个领域技能"
+echo -e "    🔄 .workflow/        — 自动开发工作流（5 步闭环）"
 echo -e "    📋 PROJECT_BRIEF.md  — 项目定义模板（待填写）"
-echo -e "    🔄 .workflow/        — 自动开发工作流"
+echo -e "    📖 docs/reference/   — 方法论 + 案例 + 提示词 + 指南"
+echo -e "    📂 src/ + tests/     — 代码骨架"
+echo ""
+echo -e "  ${YELLOW}🚀 下一步:${NC}"
+echo -e "    1. ${GREEN}cd $FULL_PATH${NC}"
+echo -e "    2. 编辑 ${GREEN}docs/PROJECT_BRIEF.md${NC}，填写项目定义"
+echo -e "    3. 告诉 AI：「阅读 docs/PROJECT_BRIEF.md，然后开始开发」"
 echo ""
 
-# 根据 AI 类型给出提示
 case "$AI_TYPE" in
-    claude)  echo -e "  ${YELLOW}开始开发:${NC}  cd $FULL_PATH && claude" ;;
-    cursor)  echo -e "  ${YELLOW}开始开发:${NC}  用 Cursor 打开 $FULL_PATH" ;;
-    copilot) echo -e "  ${YELLOW}开始开发:${NC}  用 VS Code 打开 $FULL_PATH（Copilot 自动加载）" ;;
-    windsurf) echo -e "  ${YELLOW}开始开发:${NC}  用 Windsurf 打开 $FULL_PATH" ;;
-    cline)   echo -e "  ${YELLOW}开始开发:${NC}  用 VS Code + Cline 扩展打开 $FULL_PATH" ;;
-    codex)   echo -e "  ${YELLOW}开始开发:${NC}  cd $FULL_PATH && codex" ;;
+    claude)  echo -e "  ${YELLOW}启动:${NC}  cd $FULL_PATH && claude" ;;
+    cursor)  echo -e "  ${YELLOW}启动:${NC}  用 Cursor 打开 $FULL_PATH" ;;
+    copilot) echo -e "  ${YELLOW}启动:${NC}  用 VS Code 打开 $FULL_PATH（Copilot 自动加载）" ;;
+    windsurf) echo -e "  ${YELLOW}启动:${NC}  用 Windsurf 打开 $FULL_PATH" ;;
+    cline)   echo -e "  ${YELLOW}启动:${NC}  用 VS Code + Cline 扩展打开 $FULL_PATH" ;;
+    codex)   echo -e "  ${YELLOW}启动:${NC}  cd $FULL_PATH && codex" ;;
     all)
-        echo -e "  ${YELLOW}开始开发:${NC}"
+        echo -e "  ${YELLOW}启动:${NC}"
         echo -e "    Claude:  cd $FULL_PATH && claude"
         echo -e "    Cursor:  用 Cursor 打开 $FULL_PATH"
         echo -e "    Copilot: 用 VS Code 打开 $FULL_PATH"
