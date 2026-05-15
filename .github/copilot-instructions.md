@@ -1,0 +1,9 @@
+# GitHub Copilot Instructions
+
+> 所有内容已统一维护在 **AI_GUIDE.md**，请先阅读该文件。
+
+📖 **入口文件：** [AI_GUIDE.md](./AI_GUIDE.md)
+
+---
+
+当用户要求使用 vibe-coding-cn 孵化项目时，请阅读 AI_GUIDE.md 并按其中的「完整孵化流程」操作。
