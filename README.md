@@ -199,10 +199,12 @@ git push origin main
 # Linux / macOS / Git Bash：
 git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git ~/vibe-coding-cn
 bash ~/vibe-coding-cn/vibe-init.sh --help
+```
 
-# Windows PowerShell：
-git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git $HOMEibe-coding-cn
-bash $HOMEibe-coding-cnibe-init.sh --help
+```powershell
+# Windows PowerShell（需先安装 Git for Windows 以获得 bash）：
+git clone --depth 1 https://github.com/yongc2025/vibe-coding-cn.git "$HOME\vibe-coding-cn"
+bash "$HOME/vibe-coding-cn/vibe-init.sh" --help
 ```
 
 运行 `--help` 查看所有参数后，执行初始化：
@@ -210,10 +212,16 @@ bash $HOMEibe-coding-cnibe-init.sh --help
 ```bash
 # Linux / macOS / Git Bash：
 bash ~/vibe-coding-cn/vibe-init.sh --ai <AI工具> --type <项目类型> --name <项目名>
-
-# Windows PowerShell：
-bash $HOMEibe-coding-cnibe-init.sh --ai <AI工具> --type <项目类型> --name <项目名>
 ```
+
+```powershell
+# Windows PowerShell：
+bash "$HOME/vibe-coding-cn/vibe-init.sh" --ai <AI工具> --type <项目类型> --name <项目名>
+```
+
+> 💡 示例：`bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name my-bot`（Windows 用 `bash "$HOME/vibe-coding-cn/vibe-init.sh" ...`）
+
+> ⚠️ **Windows 用户须知**：`vibe-init.sh` 是 Bash 脚本，不能直接在 CMD/PowerShell 中用 `./vibe-init.sh` 执行，必须通过 `bash` 调用。请确保已安装 [Git for Windows](https://git-scm.com/download/win)（自带 Git Bash）。
 
 > 💡 示例：`bash ~/vibe-coding-cn/vibe-init.sh --ai copilot --type quant-crypto --name my-bot`
 >

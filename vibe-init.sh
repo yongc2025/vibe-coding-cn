@@ -25,7 +25,7 @@ usage() {
 ${BLUE}vibe-init.sh${NC} — 从母机初始化新项目（完整孵化版）
 
 ${YELLOW}用法:${NC}
-  ./vibe-init.sh --ai <助手> --type <类型> [选项]
+  bash vibe-init.sh --ai <助手> --type <类型> [选项]
 
 ${YELLOW}AI 助手 (--ai):${NC}
   claude        生成 CLAUDE.md（Claude Code）
@@ -59,10 +59,10 @@ ${YELLOW}选项:${NC}
   --help              显示此帮助
 
 ${YELLOW}示例:${NC}
-  ./vibe-init.sh --ai claude --type quant-crypto --name my-bot
-  ./vibe-init.sh --ai cursor --type app --name my-app --skills twscrape,telegram-dev
-  ./vibe-init.sh --ai all --type custom --skills ccxt,postgresql,canvas-dev
-  ./vibe-init.sh --type quant-crypto --name my-bot --dry-run
+  bash vibe-init.sh --ai claude --type quant-crypto --name my-bot
+  bash vibe-init.sh --ai cursor --type app --name my-app --skills twscrape,telegram-dev
+  bash vibe-init.sh --ai all --type custom --skills ccxt,postgresql,canvas-dev
+  bash vibe-init.sh --type quant-crypto --name my-bot --dry-run
 EOF
     exit 0
 }
